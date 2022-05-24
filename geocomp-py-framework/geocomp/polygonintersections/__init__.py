@@ -9,7 +9,9 @@ Algoritmos disponveis:
 from . import greiner
 
 children = [
-	[ 'greiner', 'Greiner', 'Greiner' ]
+	[ 'greiner', 'GreinerIntersection', 'Greiner Intersecção' ],
+	[ 'greiner', 'GreinerUnion', 'Greiner União'],
+	[ 'greiner', 'GreinerDifference', 'Greiner Diferença'],
 ]
 
 __all__ = [a[0] for a in children]
