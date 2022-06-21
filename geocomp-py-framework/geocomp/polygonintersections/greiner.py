@@ -160,38 +160,59 @@ output: retorna True se p0 está dentro de P
 '''
 
 def EvenOdd(p0, P):
-    p = P
-    q = P.prev
-    c = False
-    while True:
-        if(p0.x == p.vertex.x and p0.y == p.vertex.y): # ponto está no vertice
-            return True
-        if (p.vertex.y > p0.y) != (q.vertex.y > p0.y):
-            slope = (p0.x - p.vertex.x) * (q.vertex.y - p.vertex.y) - (q.vertex.x - p.vertex.x) * (p0.y - p.vertex.y)
-            if slope == 0:
-                return True
-            if (slope < 0) != (q.vertex.y < p.vertex.y):
-                c = not c 
-        q = p
-        p = p.next
-        if p is P: break
+    # p = P
+    # q = P.prev
+    # c = False
+    # while True:
+    #     if(p0.x == p.vertex.x and p0.y == p.vertex.y): # ponto está no vertice
+    #         return True
+    #     if (p.vertex.y > p0.y) != (q.vertex.y > p0.y):
+    #         slope = (p0.x - p.vertex.x) * (q.vertex.y - p.vertex.y) - (q.vertex.x - p.vertex.x) * (p0.y - p.vertex.y)
+    #         if slope == 0:
+    #             return True
+    #         if (slope < 0) != (q.vertex.y < p.vertex.y):
+    #             c = not c 
+    #     q = p
+    #     p = p.next
+    #     if p is P: break
     
-    if c: return c    
+    # if c: return c    
     
-    while True:
-        if(p0.x == p.vertex.x and p0.y == p.vertex.y): # ponto está no vertice
-            return True
-        if (p.vertex.y < p0.y) != (q.vertex.y < p0.y):
-            slope = (p0.x - p.vertex.x) * (q.vertex.y - p.vertex.y) - (q.vertex.x - p.vertex.x) * (p0.y - p.vertex.y)
-            if slope == 0:
-                return True
-            if (slope < 0) != (q.vertex.y < p.vertex.y):
-                c = not c 
-        q = p
-        p = p.next
-        if p is P: break
-    return c
+    # while True:
+    #     if(p0.x == p.vertex.x and p0.y == p.vertex.y): # ponto está no vertice
+    #         return True
+    #     if (p.vertex.y < p0.y) != (q.vertex.y < p0.y):
+    #         slope = (p0.x - p.vertex.x) * (q.vertex.y - p.vertex.y) - (q.vertex.x - p.vertex.x) * (p0.y - p.vertex.y)
+    #         if slope == 0:
+    #             return True
+    #         if (slope < 0) != (q.vertex.y < p.vertex.y):
+    #             c = not c 
+    #     q = p
+    #     p = p.next
+    #     if p is P: break
 
+    c = 0
+    d = 0
+    p = P
+
+    while True:
+        if p.vertex.x == p0.x and p.vertex.y == p0.y: return True # ponto está no vértice
+        q = p.prev
+        testeC = (p.vertex.y > p0.y) != (q.vertex.y > p0.y)
+        testeD = (p.vertex.y < p0.y) != (q.vertex.y < p0.y)
+        if testeC or testeD:
+            x = (p0.y * p.vertex.x - p0.y * q.vertex.x - q.vertex.y * p.vertex.x + p.vertex.y * q.vertex.x)/(p.vertex.y - q.vertex.y)
+            if testeC and x > p0.x: c += 1
+            if testeD and x < p0.x: d += 1
+        p = p.next
+        if p is P:
+            break
+    if c%2 != d%2:
+        return True
+    if c%2 == 1:
+        return True
+    else:
+        return False
 '''
 Input:
     P1 - lista circular duplamente ligada representando o polígono
