@@ -5,13 +5,24 @@ Dado dois poligonos encontrar a união, intersecção e diferença
 
 Algoritmos disponveis:
 - Greiner
+- Degenerados
 """
-from . import greiner
 
-children = [
-	[ 'greiner', 'GreinerIntersection', 'Greiner Intersecção' ],
-	[ 'greiner', 'GreinerUnion', 'Greiner União'],
-	[ 'greiner', 'GreinerDifference', 'Greiner Diferença'],
-]
+from . import Degenerados_Cubico
+from . import Greiner_Cubico
+from . import Greiner_Rapido
+# from . import lineintersections
+# from . import polygonintersections
+# from .common.guicontrol import init_display
+# from .common.guicontrol import plot_input
+# from .common.guicontrol import run_algorithm
+# from .common.prim import get_count
+# from .common.prim import reset_count
 
-__all__ = [a[0] for a in children]
+children = (   ( 'Degenerados_Cubico',  None, 'Casos degenerados' ),
+               ( 'Greiner_Cubico',  None, 'Greiner Vanilla' ),
+               ( 'Greiner_Rapido', None, 'Greiner Rapido')
+
+	)
+
+__all__ = [p[0] for p in children]
