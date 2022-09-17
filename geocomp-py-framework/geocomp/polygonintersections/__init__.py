@@ -11,6 +11,7 @@ Algoritmos disponveis:
 from . import Degenerados_Cubico
 from . import Greiner_Cubico
 from . import Greiner_Rapido
+from . import Sweep_Line
 # from . import lineintersections
 # from . import polygonintersections
 # from .common.guicontrol import init_display
@@ -21,7 +22,8 @@ from . import Greiner_Rapido
 
 children = (   ( 'Degenerados_Cubico',  None, 'Casos degenerados' ),
                ( 'Greiner_Cubico',  None, 'Greiner Vanilla' ),
-               ( 'Greiner_Rapido', None, 'Greiner Rapido')
+               ( 'Greiner_Rapido', None, 'Greiner Rapido'),
+               ( 'Sweep_Line', None, 'Sweep Line')
 
 	)
 

@@ -292,7 +292,7 @@ def MarkSegments(P1):
                 while True:
                     p = p.next
                     new = LinkedList(p.vertex)
-                    poly.insert(new)
+                    poly.next = new
                     Segment(poly.vertex, new.vertex).hilight(color_line='white')
                     poly = poly.next
                     if p.intersect:
@@ -302,7 +302,7 @@ def MarkSegments(P1):
                 while True:
                     p = p.prev
                     new = LinkedList(p.vertex)
-                    poly.insert(new)
+                    poly.next = new
                     Segment(poly.vertex, new.vertex).hilight(color_line='white')
                     poly = poly.next
                     if p.intersect:

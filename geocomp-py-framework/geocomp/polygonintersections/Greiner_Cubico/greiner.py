@@ -6,6 +6,7 @@ from geocomp.common.guiprim import *
 from geocomp.common.point import Point
 import geocomp.common.prim as primitive
 import math
+import time
 
 from geocomp.config import COLOR_LINE
 
@@ -20,9 +21,11 @@ class LinkedList:
         self.neighbor = False
         self.alpha = 0.0
 
-    def insert(self, new): #insere o new na lista em tempo O(k), onde k é o numero de intersecções
+    def insert(self, new): #insere o new na lista em tempo O(k), onde k é o numero de intersecções.
+        #Insere o nó new entre a aresta representada pelos pontos self e p. Repare que a inserção é ordenada pelo atributo alpha
+        # p nem sempre será self.next, poís podem haver várias intersecções numa mesma aresta 
         p = self
-        while p.next and p.next.intersect:
+        while p.next and p.next.intersect: 
             if p.next.alpha < new.alpha:
                 p = p.next
             else:
@@ -37,7 +40,9 @@ class LinkedList:
 
         return new       
 
-    def create_intersect_node(self, A, B): #cria nó de intersecção e adiciona ele na lista
+    def create_intersect_node(self, A, B): 
+        #cria nó de intersecção e adiciona ele na lista
+        #O novo nó criado corresponde ao ponto de intersecção entre as arestas A e B
         vertex = CalculateIntersectPoint(A, B)
         id = vertex.hilight(color='white')
         new = LinkedList(vertex)
@@ -54,8 +59,9 @@ class LinkedList:
             p = p.next
             if p is self:
                 break
+
 '''
-Atualiza a interface gráfica 
+Renderiza imagem na tela 
 '''
 
 def atualiza(delete=None):
@@ -66,6 +72,8 @@ def atualiza(delete=None):
     if delete:
         for element in delete:
             control.plot_delete(element)
+
+
 '''
 Recebe uma lista de ligada de polígonos e devolve uma outra lista circular duplamente ligada, mas com outros atributos
 '''
@@ -73,7 +81,7 @@ Recebe uma lista de ligada de polígonos e devolve uma outra lista circular dupl
 def ArrayToList(P, pertubate):
     x = 0.0
     y = 0.0
-    if pertubate:
+    if pertubate: #pequena perturbação aleatória no polígono
         theta = rng.uniform(0, 2*math.pi)
         x = 0.001*math.cos(theta)
         y = 0.001*math.sin(theta)
@@ -104,7 +112,7 @@ def CalculateIntersectPoint(A, B):
     p2 = A.to
     p3 = B.init
     p4 = B.to
-
+    #Note que D != 0 por conta da perturbação
     D = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x)
     x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x))/D 
     y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x))/D 
@@ -132,7 +140,7 @@ def Intersect(P1, P2):
         idA = A.hilight(color_line='blue')
         while True:
             nextP2 = p2.next
-            while nextP2.intersect: nextP2 = nextP2.next 
+            while nextP2.intersect: nextP2 = nextP2.next #loop para encontrar o vértice original do polígono não algum que foi inserido
             B = Segment(p2.vertex, nextP2.vertex)
             idB = B.hilight(color_line='green')
             if A.intersects(B):
@@ -184,10 +192,11 @@ def EvenOdd(p0, P):
     while True:
         if p.vertex.x == p0.x and p.vertex.y == p0.y: return True # ponto está no vértice
         q = p.prev
-        testeC = (p.vertex.y > p0.y) != (q.vertex.y > p0.y)
-        testeD = (p.vertex.y < p0.y) != (q.vertex.y < p0.y)
+        testeC = (p.vertex.y > p0.y) != (q.vertex.y > p0.y) #interpretação 1
+        testeD = (p.vertex.y < p0.y) != (q.vertex.y < p0.y) #interpretação 2
         if testeC or testeD:
-            x = (p0.y * p.vertex.x - p0.y * q.vertex.x - q.vertex.y * p.vertex.x + p.vertex.y * q.vertex.x)/(p.vertex.y - q.vertex.y)
+            x = (p0.y * p.vertex.x - p0.y * q.vertex.x - q.vertex.y * p.vertex.x + p.vertex.y * q.vertex.x)/(p.vertex.y - q.vertex.y) #raio para x=+infiniro ou x=-infinito
+            # (p.vertex.y - q.vertex.y) != 0, por conta da perturbação
             if testeC and x > p0.x: c += 1
             if testeD and x < p0.x: d += 1
         p = p.next
@@ -205,7 +214,8 @@ Input:
     P2 - lista circular duplamente ligada representando o polígono
 
 Output:
-    Não retorna nada, no entanto marca os vértices de intersecção das lista P1 e P2 como de entrada ou de saída
+    Marca os vértices de intersecção das lista P1 e P2 como de entrada ou de saída, note que por conta da perturbação
+    toda aresta que entra no outro polígono deve alguma hora sair 
 '''
 
 def ChalkCart(P1, P2, intersection):
@@ -232,7 +242,7 @@ Input:
     P1 - lista circular duplamente ligada representando o polígono
 
 Output:
-    Não retorna nada. Marca as arestas que são a intersecção entre o poligono P1 e P2 
+    Marca as arestas que são a intersecção entre o poligono P1 e P2 
 '''
 
 def MarkSegments(P1):
@@ -240,7 +250,7 @@ def MarkSegments(P1):
     newPolygon = None
     while True:
         p = q
-        while not p.intersect:
+        while not p.intersect: #encontrando um nó que seja de intersecção
             p = p.next
             if p is P1:
                 break
@@ -249,7 +259,7 @@ def MarkSegments(P1):
             break
         oldPolygon = newPolygon
         newPolygon = LinkedList(p.vertex)
-        newPolygon.nextPoly = oldPolygon
+        newPolygon.nextPoly = oldPolygon #criando um novo polígono
         poly = newPolygon
         start = p
         while True:
@@ -257,26 +267,29 @@ def MarkSegments(P1):
             if p.entryExit:
                 while True:
                     p = p.next
+                    id = p.vertex.hilight('magenta')
                     new = LinkedList(p.vertex)
-                    poly.insert(new)
+                    poly.next = new
                     Segment(poly.vertex, new.vertex).hilight(color_line='white')
                     poly = poly.next
+                    atualiza([id])
                     if p.intersect:
                         p.intersect = False
                         break
             else:
                 while True:
                     p = p.prev
-                    new = LinkedList(p.vertex)
-                    poly.insert(new)
+                    id = p.vertex.hilight('magenta')
+                    new = LinkedList(p.vertex) #criando vertice
+                    poly.next = new #inseridno nova vértice
                     Segment(poly.vertex, new.vertex).hilight(color_line='white')
                     poly = poly.next
+                    atualiza([id])
                     if p.intersect:
                         p.intersect = False
                         break
-            atualiza()
             p = p.neighbor
-            if p is start: #terminamos o primeiro poligono
+            if p is start: #terminamos o primeiro poligono, ainda podem haver outros
                 q = p
                 break
         
@@ -289,12 +302,13 @@ def MarkSegments(P1):
     
 
 def GreinerIntersection(l):
+    t0 = time.time()
     P1 = ArrayToList(l[0].pts, True)
     P2 = ArrayToList(l[1].pts, False)
     l[1].plot(color='peru')
     atualiza()
     intersect = Intersect(P1, P2)
-    if intersect:
+    if intersect: #se houver intersecção entre P1 e P2
         l[0].plot(color='green') 
         ChalkCart(P1, P2, True)
         l[0].hide()
@@ -311,13 +325,17 @@ def GreinerIntersection(l):
         
     else:
         Pres = Inside(P1, P2)
-        if Pres:
+        if Pres: #Se Pres=None então os poligonos são disjuntos
             p = Pres
             while True:
                 A = Segment(p.vertex, p.next.vertex)
                 A.hilight(color_line='white')
                 p = p.next
                 if p is Pres: break
+    ret = Segment()
+    tf = time.time()
+    ret.extra_info = 'tempo {} ms'.format(tf-t0)
+    return ret
 
 def GreinerUnion(l):
     P1 = ArrayToList(l[0].pts, True)
