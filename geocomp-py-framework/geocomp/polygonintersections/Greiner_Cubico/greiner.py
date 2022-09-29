@@ -274,7 +274,6 @@ def MarkSegments(P1):
                     poly = poly.next
                     atualiza([id])
                     if p.intersect:
-                        p.intersect = False
                         break
             else:
                 while True:
@@ -286,8 +285,8 @@ def MarkSegments(P1):
                     poly = poly.next
                     atualiza([id])
                     if p.intersect:
-                        p.intersect = False
                         break
+            p.intersect = False
             p = p.neighbor
             if p is start: #terminamos o primeiro poligono, ainda podem haver outros
                 q = p

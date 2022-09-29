@@ -42,7 +42,7 @@ class LinkedList:
         if vertex is None:
             print("Acho que to calculando errado aqui")
             vertex = A.to
-            d1 = (B.init - A.init).x * (A.to - A.init).x + (B.to - A.init).y * (A.to - A.init).y 
+            d1 = (B.to - A.init).x * (A.to - A.init).x + (B.to - A.init).y * (A.to - A.init).y 
             d2 = primitive.dist2(A.init, A.to)
             alpha = d1/d2
             colinear = True
@@ -165,16 +165,21 @@ def Intersect(P1, P2):
                     if colinear:
                         new1, id1 = p1.create_intersect_node(alpha, nextP2.vertex)
                         new2, id2 = p2.create_intersect_node(beta, nextP1.vertex)
+                        new1.neighbor = nextP2
+                        nextP2.neighbor = new1
+                        new2.neighbor = nextP1
+                        nextP1.neighbor = new2
+                        nextP2.intersect = nextP1.intersect = True
                         print("colinear")
                     else:
                         new1, id1 = p1.create_intersect_node(alpha, vertex)
                         new2, id2 = p2.create_intersect_node(beta, vertex)                        
-                    new1.neighbor = new2
-                    new2.neighbor = new1
+                        new1.neighbor = new2
+                        new2.neighbor = new1
 
                     # nextP2 = new2.next
                     # nextP1 = new1.next
-                elif (alpha < EPS and beta < 1-EPS and beta > 0) or ((alpha < EPS or alpha >= 1-EPS) and beta > EPS and beta < 1-EPS): #Caso T, com alpha = 0 e 0 < beta < 1
+                elif (alpha > 1 - EPS and beta < 1 and beta > 0) or ((alpha < EPS or alpha >= 1) and beta > 0 and beta < 1): #Caso T, com alpha = 1 e 0 < beta < 1
                     print("Caso T1 A = {} B = {}".format(alpha, beta))
                     new2, id2 = p2.create_intersect_node(beta, nextP1.vertex)
                     new2.neighbor = nextP1
@@ -182,7 +187,7 @@ def Intersect(P1, P2):
                     nextP1.intersect = True
                     # nextP2 = nextP2.next
                     # p2 = p2.next
-                elif (beta < EPS and alpha < EPS and alpha > EPS) or ((beta < EPS or beta >= 1-EPS) and alpha > EPS and alpha < 1-EPS): # Caso T, com beta = 0 e 0 < alpha < 1
+                elif (beta > 1 - EPS and alpha < 1 and alpha > 0) or ((beta < EPS or beta >= 1) and alpha > 0 and alpha < 1): # Caso T, com beta = 1 e 0 < alpha < 1
                     print("Caso T2 A = {} B = {}".format(alpha, beta))
                     new1, id1 = p1.create_intersect_node(alpha, nextP2.vertex)
                     new1.neighbor = nextP2

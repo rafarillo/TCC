@@ -8,7 +8,7 @@ from geocomp.common.point import Point
 import geocomp.common.prim as primitive
 import math
 import time
-from queue import Queue
+from queue import PriorityQueue, Queue
 import functools
 import random as rng
 
@@ -28,6 +28,25 @@ def compare(i, j):
         return i.point.y - j.point.y
     return i.point.x - j.point.x
 
+def compareBST(event, root):
+    # if abs(root.otherEvent.point.x - root.point.x) < EPS:
+    #     y = root.point.y
+    # else:
+    #     m = (root.otherEvent.point.y - root.point.y)/(root.otherEvent.point.x - root.point.x)
+    #     y = m * (event.point.x - root.point.x) + root.point.y
+    # Point(event.point.x, y).hilight('red')
+    if abs(event.point.y - root.point.y) < EPS: #os nós tem mesma coordenada y
+        if root == event: return 0 #os nós de fato são iguais
+        return 1 #não são iguais
+
+    elif event.point.y - root.point.y < 0: #subarvore a esquerda
+        return 1
+    
+    elif event.point.y - root.point.y > 0: #subarvore a direita
+        return -1
+
+
+
 class SweepEvent:
     #Os paramentros são a coordenada, se é o extremo esquerdo da aresta, proximo evento da aresta, se é subj ou clip, o poligono a qual pertencia, e o segmento a qual pertencia  
     def __init__(self, point, left, otherEvent, polType, pol, segment):
@@ -37,9 +56,21 @@ class SweepEvent:
         self.polType = polType
         self.pol = pol
         self.segment = segment
+        self.inOut = None
+        self.otherInOut = None
+        self.inResult = None
+        self.prevInResult = None
     
     def __lt__(self, other):
-        return compare(self, other)
+        return compare(self, other) < 0
+
+class AVL:
+    def __init__(self, data, left=None, right=None, draw_id=None) -> None:
+        self.data = data
+        self.height = 1
+        self.left = left
+        self.right = right
+        self.draw_id = draw_id  
 
 def CreateQeue(l):
     i = 0
@@ -63,7 +94,7 @@ def CreateQeue(l):
         i += 1
     
     Q = sorted(Q, key=functools.cmp_to_key(compare))
-    q = Queue()
+    q = PriorityQueue()
     print("Fila inicial")
     for element in Q:
         if element.left == None:
@@ -80,20 +111,25 @@ def CreateQeue(l):
     #     print(Q[i], Q[i].otherEvent, sep='->')
     #     i += 1
 
-    return q, Nvertex
+    return q
 
-class Treap:
-    def __init__(self, data, priority, left=None, right=None, draw_id=None) -> None:
-        self.data = data
-        self.priority = rng.randrange(priority)
-        self.left = left
-        self.right = right
-        self.draw_id = draw_id    
+
+def avlHeight(root):
+    if root == None: return 0
+    return root.height
+
+def balance(root):
+    if root == None: return 0
+
+    return avlHeight(root.left) - avlHeight(root.right)
 
 def rotateLeft(root):
     new_root = root.right
     root.right = new_root.left
     new_root.left = root
+
+    root.height = 1 + max(avlHeight(root.left), avlHeight(root.right))
+    new_root.height = 1 + max(avlHeight(new_root.left), avlHeight(new_root.right))
 
     return new_root
 
@@ -102,140 +138,238 @@ def rotateRight(root):
     root.left = new_root.right
     new_root.right = root
 
+    root.height = 1 + max(avlHeight(root.left), avlHeight(root.right))
+    new_root.height = 1 + max(avlHeight(new_root.left), avlHeight(new_root.right))
+
+
     return new_root
 
-def insertNode(root, event, N):
+def insertNode(root, event):
 
     if root == None:
-        return Treap(event, N)
-    # print(compare(event, root.data))
-    if compare(event, root.data):
-        root.left = insertNode(root.left, event, N)
+        return AVL(event)
 
-        if root.left and root.left.priority > root.priority:
-            root = rotateRight(root)
+    cmp = compareBST(event,root.data)
+    if cmp == 1:
+        root.left = insertNode(root.left, event)
     
-    else:
-        root.right = insertNode(root.right, event, N)
+    elif cmp == -1:
+        root.right = insertNode(root.right, event)
+    
+    if cmp == 0: print("Igual mentira isso kkkkkkk"); return
 
-        if root.right and root.right.priority > root.priority:
-            root = rotateLeft(root)
+    root.height = 1 + max(avlHeight(root.left), avlHeight(root.right))
+    bal = balance(root)
+
+    if bal > 1:
+        cmp = compareBST(event, root.left.data)
+        if cmp == 0: print("Igual mentira isso kkkkkkk"); return
+        if cmp == 1:
+            return rotateRight(root)
+        elif cmp == -1:
+            root.left = rotateLeft(root.left)
+            return rotateRight(root)
+        
+    if bal < -1:
+        cmp = compareBST(event, root.right.data)
+        if cmp == -1:
+            return rotateLeft(root)
+        elif cmp == 1:
+            root.right = rotateRight(root.right)
+            return rotateLeft(root)
     
     return root
-
-def findNode(root, event):
-    if root == None:
-        return False
     
-    if root == event:
-        return root
-    
-    if compare(event, root.data):
-        return findNode(root.left, event)
-    
-    return findNode(root.right, event)
-
 def deleteNode(root, event):
+
     if root == None:
-        return None
-    # print('Root = ',root.data, 'Event', event, event == root.data)
-    if root.data == event:
-        if root.left == None and root.right == None: #apenas a raiz
-            # print('Cai aqui')
-            # atualiza([root.id])
-            root = None
-        
-        elif root.left and root.right: #raiz com dois filhos
-
-            if root.left.priority < root.right.priority:
-                root = rotateLeft(root)
-                root.left = deleteNode(root.left, event)
-            else:
-                root = rotateRight(root)
-                root.right = deleteNode(root.right, event)
-        
-        else: #raiz com um filho
-            c = root.left if (root.left) else root.right
-            # atualiza([root.id])
-            root = c
-        
         return root
-
-    if compare(event, root.data):
-        root.left = deleteNode(root.left, event)
     
-    else:
+    cmp = compareBST(event, root.data)
+    if cmp == 1:
+        root.left = deleteNode(root.left, event)
+    elif cmp == -1:
         root.right = deleteNode(root.right, event)
     
-    return root
+    else:
+        if root.left == None: #sem subarvore a esquerda
+            r = root.right
+            root = None
+            return r
+        elif root.right == None: #sem subarvore a direita
+            l = root.left
+            root = None
+            return l
+        p = root.right
+        while p.left: p = p.left #minimo da subarvore a direita
+        root.data = p.data
+        root.right = deleteNode(root.right, p.data)
+    
+    if root == None:
+        return root
 
-def printTreap(root):
+    root.height = 1 + max(avlHeight(root.left), avlHeight(root.right))
+    bal = balance(root)
+
+    if bal > 1:
+        if balance(root.left) >= 0:
+            return rotateRight(root)
+        else:
+            root.left = rotateLeft(root.left)
+            return rotateRight(root)
+    
+    if bal < -1:
+        if balance(root.right) <= 0:
+            return rotateLeft(root)
+        else:
+            root.right = rotateRight(root.right)
+            return rotateLeft(root)
+    return root   
+
+def printAVL(root):
     if root != None:
-        printTreap(root.left)
+        printAVL(root.left)
         # root.id = Segment(root.data.point, root.data.otherEvent.point).hilight('magenta')
-        root.data.draw_id = Segment(root.data.point, root.data.otherEven)
-        print(root.data)
-        printTreap(root.right)
+        # root.data.draw_id = Segment(root.data.point, root.data.otherEvent)
+        print(root.data.segment, root.data.pol)
+        printAVL(root.right)
 
 def findPredSuc(root, event):
     if root == None:
         return
-    
-    if root.data == event:
+    cmp = compareBST(event, root.data)
+    if cmp == 0:
         
         #maximo da subarvore esquerda é o predecessor
         if root.left != None:
             p = root.left
-            while p.right: p = p.right
+            while p.right: 
+                if p.data.pol != event.pol:
+                    findPredSuc.preOther = p
+                p = p.right
             findPredSuc.pre = p
+            # print('pre p.pol=', p.data.pol)
 
         #minimo da subárvore direita é o sucessor 
         if root.right != None:
             p = root.right
-            while p.left: p = p.left
+            while p.left: 
+                if p.data.pol != event.pol:
+                    findPredSuc.sucOther = p
+                p = p.left
             findPredSuc.suc = p
-        
+            # print('suc p.pol=', p.data.pol)
+
         return
     
-    if compare(event, root.data):
+    if cmp == 1:
         findPredSuc.suc = root
+        if root.data.pol != event.pol:
+            findPredSuc.sucOther = root
         findPredSuc(root.left, event)
     
     else:
         findPredSuc.pre = root
+        if root.data.pol != event.pol:
+            findPredSuc.preOther = root
         findPredSuc(root.right, event)
+
+def setInformation(event, pre):
+    pass
+
+def calculateIntersectPoint(A, B):
+    p1 = A.init
+    p2 = A.to
+    p3 = B.init
+    p4 = B.to
+
+    D = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x)
+    if D == 0.0:
+        return None
+    x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x))/D 
+    y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x))/D 
+
+    return Point(x, y)
+
+def possibleInter(curr, other, Q):
+    if not other or not curr: return
+    A = Segment(curr.point, curr.otherEvent.point)
+    B = Segment(other.point, other.otherEvent.point)
+
+    if A.intersects(B):
+        p = calculateIntersectPoint(A, B)
+        p.hilight('magenta')
+        I1 = SweepEvent(p, False, curr, curr.polType, curr.pol, curr.segment)
+        I2 = SweepEvent(p, True, other, other.polType, other.pol, other.segment)
+
+        curr.otherEvent = I1
+        other.otherEvent = I2
+
+        Q.put(I1)
+        Q.put(I2)
+
 
 def Intersection(l):
     # print(l[0].vertices()[0])
-    Q, N = CreateQeue(l)
+    Q = CreateQeue(l)
     S = None
     while not Q.empty():
         event = Q.get()
         findPredSuc.pre = None
         findPredSuc.suc = None
+        findPredSuc.preOther = None
+        findPredSuc.sucOther = None
         id1 = None
         id2 = None
         idE = Segment(event.point, event.otherEvent.point).hilight('white')
         if event.left:
-            print('Inserindo', event)
-            S = insertNode(S, event, 2*N)
+            print('left')
+            print('Inserindo ', event.segment, event.pol)
+            S = insertNode(S, event)
             findPredSuc(S, event)
-            pre = findPredSuc.pre
-            suc = findPredSuc.suc
+            pre = findPredSuc.preOther
+            suc = findPredSuc.sucOther
+            print(pre, suc)
             if pre:
                 pre = pre.data
+                print('pre = ', pre.segment, ' ', pre.pol)
                 id1 = Segment(pre.point, pre.otherEvent.point).hilight('yellow')
             if suc:
                 suc = suc.data
+                print('suc = ', suc.segment, ' ', suc.pol)
                 id2 = Segment(suc.point, suc.otherEvent.point).hilight('green')
+            
+            possibleInter(event, suc, Q)
+            possibleInter(event, pre, Q)
             
     
         else:
-            print('Deletando', event.otherEvent)
+            print('right')
+            print('Deletando ', event.otherEvent.segment, event.otherEvent.pol)
+            findPredSuc(S, event)
+            pre = findPredSuc.preOther
+            suc = findPredSuc.sucOther
+            print(pre, suc)
+
+            if pre:
+                pre = pre.data
+                print('pre = ', pre.segment, ' ', pre.pol)
+                id1 = Segment(pre.point, pre.otherEvent.point).hilight('yellow')
+
+            if suc:
+                suc = suc.data
+                print('suc = ', suc.segment, ' ', suc.pol)
+                id2 = Segment(suc.point, suc.otherEvent.point).hilight('green')
+
+
             S = deleteNode(S, event.otherEvent)
+            possibleInter(pre, suc, Q)
+
         
-        printTreap(S)
+        printAVL(S)
         print('--------------------------------')
         id = control.plot_vert_line(event.point.x, 'blue', 2)
         pid = event.point.hilight('white')
         atualiza([id, pid, id1, id2, idE])
+    printAVL(S)
+

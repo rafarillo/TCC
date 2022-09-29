@@ -40,8 +40,8 @@ class Segment:
             color_point=config.COLOR_HI_SEGMENT_POINT):
         "desenha o segmento de reta com destaque na tela"
         self.lid = self.init.lineto (self.to, color_line)
-        self.pid0 = self.init.hilight (color_point)
-        self.pid1 = self.to.hilight (color_point)
+        # self.pid0 = self.init.hilight (color_point)
+        # self.pid1 = self.to.hilight (color_point)
         return self.lid
 
     def unhilight (self):
@@ -71,11 +71,11 @@ class Segment:
         if not self.colinear_with(point):
             return False
         if self.init.x != self.to.x:
-            return self.init.x <= point.x <= self.to.x \
-                   or self.to.x <= point.x <= self.init.x
+            return self.init.x < point.x <= self.to.x \
+                   or self.to.x <= point.x < self.init.x #half edge open
         else:
-            return self.init.y <= point.y <= self.to.y \
-                   or self.to.y <= point.y <= self.init.y
+            return self.init.y < point.y <= self.to.y \
+                   or self.to.y <= point.y < self.init.y
 
     def intersects_inside(self, other_segment) -> bool:
         ''' returns whether the other segment intersects this segment
@@ -95,7 +95,7 @@ class Segment:
     def intersects(self, other_segment) -> bool:
         if self.intersects_inside(other_segment):
             return True
-
+        
         return self.has_inside(other_segment.init)    \
                or self.has_inside(other_segment.to)   \
                or other_segment.has_inside(self.init) \

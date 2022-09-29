@@ -39,10 +39,10 @@ class Polygon:
         p = self.pts
         while p.next != self.pts:
             self.hid[p] = p.lineto (p.next, color_line)
-            self.hidp[p] = p.hilight (color_point)
+            # self.hidp[p] = p.hilight (color_point)
             p = p.next
         self.hid[p] = p.lineto (p.next, color_line)
-        self.hidp[p] = p.hilight (color_point)
+        # self.hidp[p] = p.hilight (color_point)
         control.update ()
 
     def plot (self, color = config.COLOR_POLYGON):
