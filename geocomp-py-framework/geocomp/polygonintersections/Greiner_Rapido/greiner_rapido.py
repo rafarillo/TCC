@@ -1,4 +1,5 @@
 import random as rng
+from sqlite3 import Time
 from urllib.request import CacheFTPHandler
 from geocomp.common.segment import Segment
 from geocomp.common import control
@@ -6,6 +7,7 @@ from geocomp.common.guiprim import *
 from geocomp.common.point import Edge, Point
 import geocomp.common.prim as primitive
 import math
+import time
 
 from geocomp.config import COLOR_LINE
 
@@ -169,13 +171,13 @@ def Intersect(P1, P2):
     alphasP, intersect = FindAllIntersections(P1, P2)
     if not intersect: return False
     alphasP = sorted(alphasP, key=lambda l: l[0], reverse=True)
-    print(alphasP)
+    # print(alphasP)
     for element in alphasP:
         curr_edge = Segment(VertexP[element[2]].vertex, VertexP[(element[2]+1)%len(VertexP)].vertex) 
         element[2] = VertexP[element[2]].create_intersect_node(curr_edge, element[0])
 
     alphasP = sorted(alphasP, key=lambda l: l[1], reverse=True)
-    print(alphasP)
+    # print(alphasP)
     for element in alphasP:
         curr_edge = Segment(VertexQ[element[3]].vertex, VertexQ[(element[3]+1)%len(VertexQ)].vertex)
         new = VertexQ[element[3]].create_intersect_node(curr_edge, element[1])
@@ -323,6 +325,7 @@ def MarkSegments(P1):
     
 
 def GreinerIntersection(l):
+    t0 = time.time()
     P1 = ArrayToList(l[0].pts, True)
     P2 = ArrayToList(l[1].pts, False)
     global VertexP
@@ -356,6 +359,8 @@ def GreinerIntersection(l):
                 A.hilight(color_line='white')
                 p = p.next
                 if p is Pres: break
+    tf = time.time()
+    print("Tempo: ", tf-t0)
 
 def GreinerUnion(l):
     P1 = ArrayToList(l[0].pts, True)

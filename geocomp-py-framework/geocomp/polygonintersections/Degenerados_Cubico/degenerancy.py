@@ -1,10 +1,13 @@
 import random as rng
+from threading import local
+from time import time
 from geocomp.common.segment import Segment
 from geocomp.common import control
 from geocomp.common.guiprim import *
 from geocomp.common.point import Point
 import geocomp.common.prim as primitive
 import math
+import time
 
 from geocomp.config import COLOR_LINE
 
@@ -40,7 +43,7 @@ class LinkedList:
         vertex = CalculateIntersectPoint(A, B)
         colinear = False
         if vertex is None:
-            print("Acho que to calculando errado aqui")
+            # print("Acho que to calculando errado aqui")
             vertex = A.to
             d1 = (B.to - A.init).x * (A.to - A.init).x + (B.to - A.init).y * (A.to - A.init).y 
             d2 = primitive.dist2(A.init, A.to)
@@ -55,7 +58,7 @@ class LinkedList:
     def create_intersect_node(self, alpha, vertex):
         #cria nó de intersecção e adiciona ele na lista
         id = vertex.hilight(color='white')
-        print(vertex)
+        # print(vertex)
         new = LinkedList(vertex)
         new.intersect = True
         new.alpha = alpha
@@ -64,7 +67,7 @@ class LinkedList:
     def print_polygon(self):
         p = self
         while True:
-            print(p.vertex, p.alpha)
+            # print(p.vertex, p.alpha)
             p = p.next
             if p is self:
                 break
@@ -156,12 +159,12 @@ def Intersect(P1, P2):
             if A.intersects(B):
                 alpha, vertex, colinear = p1.calculateAlpha(A,B)
                 beta = p2.calculateAlpha(B,A)[0]
-                print("alpha = {} beta = {}".format(alpha, beta))
+                # print("alpha = {} beta = {}".format(alpha, beta))
                 if abs(p1.vertex.distance_to(vertex))<EPS or abs(p2.vertex.distance_to(vertex)) < EPS: # half open edge, fechado na extremidade p2.next e p1.next
                     pass
                 elif alpha > EPS and alpha < 1.0-EPS and beta < 1.0-EPS and beta > EPS: #Caso X alpha > 0 e beta < 1
-                    print("A = {} B = {}".format(A, B))
-                    print("Caso X A = {} B = {}".format(alpha, beta))
+                    # print("A = {} B = {}".format(A, B))
+                    # print("Caso X A = {} B = {}".format(alpha, beta))
                     if colinear:
                         new1, id1 = p1.create_intersect_node(alpha, nextP2.vertex)
                         new2, id2 = p2.create_intersect_node(beta, nextP1.vertex)
@@ -170,7 +173,7 @@ def Intersect(P1, P2):
                         new2.neighbor = nextP1
                         nextP1.neighbor = new2
                         nextP2.intersect = nextP1.intersect = True
-                        print("colinear")
+                        # print("colinear")
                     else:
                         new1, id1 = p1.create_intersect_node(alpha, vertex)
                         new2, id2 = p2.create_intersect_node(beta, vertex)                        
@@ -180,7 +183,7 @@ def Intersect(P1, P2):
                     # nextP2 = new2.next
                     # nextP1 = new1.next
                 elif (alpha > 1 - EPS and beta < 1 and beta > 0) or ((alpha < EPS or alpha >= 1) and beta > 0 and beta < 1): #Caso T, com alpha = 1 e 0 < beta < 1
-                    print("Caso T1 A = {} B = {}".format(alpha, beta))
+                    # print("Caso T1 A = {} B = {}".format(alpha, beta))
                     new2, id2 = p2.create_intersect_node(beta, nextP1.vertex)
                     new2.neighbor = nextP1
                     nextP1.neighbor = new2
@@ -188,7 +191,7 @@ def Intersect(P1, P2):
                     # nextP2 = nextP2.next
                     # p2 = p2.next
                 elif (beta > 1 - EPS and alpha < 1 and alpha > 0) or ((beta < EPS or beta >= 1) and alpha > 0 and alpha < 1): # Caso T, com beta = 1 e 0 < alpha < 1
-                    print("Caso T2 A = {} B = {}".format(alpha, beta))
+                    # print("Caso T2 A = {} B = {}".format(alpha, beta))
                     new1, id1 = p1.create_intersect_node(alpha, nextP2.vertex)
                     new1.neighbor = nextP2
                     nextP2.neighbor = new1
@@ -196,7 +199,7 @@ def Intersect(P1, P2):
                     # nextP1 = nextP1.next
                     # p1 = p1.next
                 elif alpha > 1-EPS and beta > 1-EPS: #Caso V com alpha = 1 e beta = 1
-                    print("Caso V A = {} B = {}".format(alpha, beta))
+                    # print("Caso V A = {} B = {}".format(alpha, beta))
                     nextP1.neighbor = nextP2
                     nextP2.neighbor = nextP1
                     nextP1.intersect = nextP2.intersect = True
@@ -246,7 +249,9 @@ def EvenOdd(p0, P):
     p = P
 
     while True:
-        if p.vertex.x == p0.x and p.vertex.y == p0.y: return True # ponto está no vértice
+        if p.vertex.x == p0.x and p.vertex.y == p0.y: 
+            # print("Evend odd dentro")
+            return True # ponto está no vértice
         q = p.prev
         testeC = (p.vertex.y > p0.y) != (q.vertex.y > p0.y) #Interpretação 1
         testeD = (p.vertex.y < p0.y) != (q.vertex.y < p0.y) #Interpretação 2
@@ -373,73 +378,79 @@ Input:
 Output:
     Marca os vértices de intersecção das lista P1 e P2 como de entrada ou de saída
 '''
-    
-def ChalkCart(P1, P2, intersection):
+
+def CrossingBouncing(P1, P2):
     p1 = P1
     idC = []
-    while p1.intersect: p1 = p1.next #loop para começarmos de uma vértice que não é intersecção
+    while p1.intersect:
+        p1 = p1.next
+        if p1 is P1:
+            break
     p1_aux = p1
-    isInside = EvenOdd(p1.vertex, P2)
-    if not intersection:
-        isInside = not isInside
     while True:
-        if isInside: print("Dentro")
-        else: print("Fora")
-        id = p1.vertex.hilight(color='magenta')
-        print(p1.vertex)
+        id = p1.vertex.hilight('magenta')
         if p1.intersect:
             q = p1
             I = []
             while chain(q):
-                idC.append(q.vertex.hilight("indigo")) 
-                I.append(q) 
+                idC.append(q.vertex.hilight('indigo'))
+                I.append(q)
                 q = q.next
-            if len(I) < 1: #verificando se é uma cadeia ou se é somente um vértice
-                q.crossing = crossing(q)
-                if q.crossing == "Crossing": 
-                    idC.append(q.vertex.hilight("gold"))
-                    isInside = not isInside
-                else: idC.append(q.vertex.hilight("indigo"))
-                p1.entryExit = isInside
+            if len(I) < 1:
+                q.crossing = q.neighbor.crossing= crossing(q)
+                if q.crossing == "Crossing":
+                    idC.append(q.vertex.hilight('gold'))
+                else: 
+                    idC.append(q.vertex.hilight('indigo'))
                 p1 = q.next
-
             else:
                 x = localPosition(I[0])
                 y = localPosition(I[-1])
-                print(x)
-                print(y)
-                if x!= None and y != None and x[0] != y[1]: #delayed crossing
-                    idC.append(I[0].vertex.hilight("gold"))
-                    I[0].crossing = "Crossing"
-                    isInside = not isInside
-                p1.entryExit = isInside
+                # print(x)
+                # print(y)
+                if x != None and y != None and x[0] != y[1]: #delayed crossing
+                    idC.append(I[0].vertex.hilight('gold'))
+                    I[0].crossing = I[0].neighbor.crossing = "Crossing"
                 p1 = q
+
+
         else: p1 = p1.next
-
         atualiza([id])
-
-        # id2 = q.vertex.hilight("indigo")
-                 
-        if p1 is p1_aux: break
+        if p1 is p1_aux:
+            break
     for element in idC:
         control.plot_delete(element)
+    
+def ChalkCart(P1, P2, intersection):
+    p1 = P1
+    while p1.intersect:
+        p1 = p1.next
+        if p1 is P1:
+            break
+    p1_aux = p1
+    isInside = EvenOdd(p1.vertex, P2)
+
+    if not intersection:
+        isInside = not isInside
         
-    print("----------------")
+    idC = []
     while True:
-        id = p1.vertex.hilight("magenta")
-        print(p1.vertex, p1.intersect)
-        if p1.intersect and p1.crossing == "Crossing":
-            print(p1.entryExit, p1.vertex)
-            if p1.entryExit: idC.append(p1.vertex.hilight("blue"))
-            else: idC.append(p1.vertex.hilight("yellow"))
+        id = p1.vertex.hilight('magenta')
+        if p1.intersect:
+            if p1.crossing == "Crossing":
+                isInside = not isInside
+            p1.entryExit = isInside
+            if p1.entryExit: idC.append(p1.vertex.hilight(color='blue'))
+            else: idC.append(p1.vertex.hilight(color='yellow'))
+
         atualiza([id])
         p1 = p1.next
         if p1 is p1_aux:
             break
-    
     for element in idC:
         control.plot_delete(element)
-    print("+++++++++++++++++++++++=")
+    
+
 
 '''
 Input:
@@ -452,6 +463,9 @@ Output:
 def MarkSegments(P1, intersection):
     q = P1
     newPolygon = None
+
+        
+
     while True:
         p = q
         while not ( p.intersect and p.crossing == "Crossing"): #procurando pela primeira intersecção que seja de crossing
@@ -466,14 +480,14 @@ def MarkSegments(P1, intersection):
         poly = newPolygon
         start = p
         while True:
-            print('start = ', start.vertex)
+            # print('start = ', start.vertex)
             p.intersect = False
-            print('p =', p.vertex, p.intersect)
+            # print('p =', p.vertex, p.intersect)
             if p.entryExit:
                 while True:
                     p = p.next
                     id = p.vertex.hilight('magenta')
-                    print(p.entryExit, p.crossing)
+                    # print(p.entryExit, p.crossing)
                     new = LinkedList(p.vertex)
                     poly.insert(new)
                     Segment(poly.vertex, new.vertex).hilight(color_line='white')
@@ -488,7 +502,7 @@ def MarkSegments(P1, intersection):
                 while True:
                     p = p.prev
                     id = p.vertex.hilight('magenta')
-                    print(p.entryExit, p.crossing)
+                    # print(p.entryExit, p.crossing)
                     new = LinkedList(p.vertex)
                     poly.insert(new)
                     Segment(poly.vertex, new.vertex).hilight(color_line='white')
@@ -524,7 +538,7 @@ def MarkSegments(P1, intersection):
         
 
 def PolygonArea(l): #Inverte o polígono caso ele esteja no sentido horário
-    print('inverti')
+    # print('inverti')
     area = 0.0
     i = 0
     while i < len(l):
@@ -533,6 +547,7 @@ def PolygonArea(l): #Inverte o polígono caso ele esteja no sentido horário
     if area < 0.0: l.reverse()
 
 def DegenerancyIntersection(l):
+    t0 = time.time()
     P1 = ArrayToList(l[0].pts, False)
     P2 = ArrayToList(l[1].pts, False)
     PolygonArea(l[0].to_list())
@@ -541,13 +556,14 @@ def DegenerancyIntersection(l):
     atualiza()
     intersect = Intersect(P1, P2)
     if intersect:
-        l[0].plot(color='green') 
+        l[0].plot(color='green')
+        CrossingBouncing(P1, P2) 
         ChalkCart(P1, P2, True)
         l[0].hide()
         l[1].plot(color='green')
         ChalkCart(P2, P1, True)
         l[1].hide()
-        polList = MarkSegments(P1, True)
+        polList = MarkSegments(P1, False)
         p = polList
         while p is not None:
             # p.print_polygon()
@@ -564,6 +580,8 @@ def DegenerancyIntersection(l):
                 A.hilight(color_line='white')
                 p = p.next
                 if p is Pres: break
+    tf = time.time()
+    print("Tempo: ", tf-t0)
 
 def DegenerancyUnion(l):
     P1 = ArrayToList(l[0].pts, False)
@@ -575,12 +593,13 @@ def DegenerancyUnion(l):
     intersect = Intersect(P1, P2)
     if intersect:
         l[0].plot(color='green') 
+        CrossingBouncing(P1, P2) 
         ChalkCart(P1, P2, False)
         l[0].hide()
         l[1].plot(color='green')
         ChalkCart(P2, P1, False)
         l[1].hide()
-        MarkSegments(P1, False)
+        MarkSegments(P1, True)
         l[0].hide()
         l[1].hide()
     else: 
@@ -604,10 +623,11 @@ def DegenerancyDifference(l):
     intersect = Intersect(P1, P2)
     if intersect:
         l[0].plot(color='green') 
-        ChalkCart(P1, P2, True)
+        CrossingBouncing(P1, P2) 
+        ChalkCart(P1, P2, False)
         l[0].hide()
         l[1].plot(color='green')
-        ChalkCart(P2, P1, False)
+        ChalkCart(P2, P1, True)
         l[1].hide()
         MarkSegments(P1, True)
         l[0].hide()

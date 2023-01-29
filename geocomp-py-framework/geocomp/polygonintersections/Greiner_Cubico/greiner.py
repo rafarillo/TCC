@@ -331,10 +331,8 @@ def GreinerIntersection(l):
                 A.hilight(color_line='white')
                 p = p.next
                 if p is Pres: break
-    ret = Segment()
     tf = time.time()
-    ret.extra_info = 'tempo {} ms'.format(tf-t0)
-    return ret
+    print("Tempo: ", tf-t0)
 
 def GreinerUnion(l):
     P1 = ArrayToList(l[0].pts, True)
